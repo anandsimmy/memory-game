@@ -7,16 +7,17 @@ const COLORS = ['blue', 'darkmagenta', 'purple', 'orange', 'violet',
 const App= () => {
 
   const [gameLevel, setGameLevel] = useState(0);
-  const [highScore, setHighScore] =  useState(localStorage.getItem('highScore') ?? 0)
+  const [highScore, setHighScore] =  useState(localStorage.getItem('memory-game:high-score') ?? 0)
   const [boxDetails, setBoxDetails] = useState({});
-  let { current: { currentLevelDetails, gameIntervalId } } = useRef({ currentLevelDetails: [], gameIntervalId: null });
-  console.log(currentLevelDetails, gameIntervalId)
+  const { current: gameInfo } = useRef({ currentLevelDetails: [], gameIntervalId: null });
+
+  console.log(gameInfo.currentLevelDetails, gameInfo.gameIntervalId)
 
   const resetGame = () => {
     setBoxDetails({})
     setGameLevel(0)
-    clearInterval(gameIntervalId);
-    currentLevelDetails = [];
+    gameInfo.gameIntervalId= clearInterval(gameInfo.gameIntervalId);
+    gameInfo.currentLevelDetails = [];
   }
 
   const gameStartResetHandler = () => {
@@ -28,9 +29,9 @@ const App= () => {
   }
 
   const boxClickHandler = (boxIndex) => {
-    if (!gameLevel) return
-    if (boxIndex === currentLevelDetails[0]) {
-      currentLevelDetails.shift()
+    if (!gameLevel || gameInfo.gameIntervalId) return
+    if (boxIndex === gameInfo.currentLevelDetails[0]) {
+      gameInfo.currentLevelDetails.shift()
       setBoxDetails({
         color: 'green',
         boxNumber: boxIndex,
@@ -38,10 +39,10 @@ const App= () => {
       setTimeout(() => {
         setBoxDetails({});
       }, 200)
-      if (currentLevelDetails.length === 0) {
+      if (gameInfo.currentLevelDetails.length === 0) {
         setGameLevel((currentLevel) => {
           if (highScore < currentLevel) {
-            localStorage.setItem('highScore', currentLevel)
+            localStorage.setItem('memory-game:high-score', currentLevel)
             setHighScore(currentLevel);
           }
           return currentLevel + 1
@@ -51,10 +52,11 @@ const App= () => {
       setBoxDetails({
         color: 'red',
         boxNumber: boxIndex,
+        wrongBox: true
       })
       setTimeout(() => {
         resetGame();
-      }, 300)
+      }, 500)
     }
   }
   
@@ -66,39 +68,37 @@ const App= () => {
     if (gameLevel) {
       const boxColor = COLORS[randomNumberGenerator(0,10)];
       let i = 1;
-      const intervalId = setInterval(() => {
+      gameInfo.gameIntervalId  = setInterval(() => {
         const boxNumber= randomNumberGenerator()
         setBoxDetails({
           color: boxColor,
           boxNumber,
         })
-        currentLevelDetails.push(boxNumber);
+        gameInfo.currentLevelDetails.push(boxNumber);
         i++;
         checkColorInterval();
         setTimeout(() => {
           setBoxDetails({});
         }, 500)
       }, 1000)
-      gameIntervalId = intervalId;
-      console.log('interval', intervalId, gameIntervalId)
       const checkColorInterval = () => {
         if (i > gameLevel) {
-          clearInterval(intervalId);
+          gameInfo.gameIntervalId= clearInterval(gameInfo.gameIntervalId);
         }
       }
     }
   }, [gameLevel])
 
-  const { color, boxNumber } = boxDetails;
+  const { color, boxNumber, wrongBox } = boxDetails;
 
   return (
     <div className="App">
       <div className="game-wrapper">
         <div className='score-wrapper'>
-          <div>Score: {gameLevel === 0 ? 0 : gameLevel - 1}</div>
+          <div>Score: {Math.max(0, gameLevel - 1)}</div>
           <div>Highscore: {highScore}</div>
         </div>
-        <div className="box-wrapper">
+        <div className={`box-wrapper ${wrongBox ? 'shake' : ''}`}>
           {
             Array(5).fill(1).map((item, index) => {
               if (index === boxNumber) {
