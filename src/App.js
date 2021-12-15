@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 const COLORS = ['blue', 'darkmagenta', 'purple', 'orange', 'violet',
-  'brown', 'chocolate', 'darksalmon', 'springgreen', 'royalblue']
+  'brown', 'chocolate', 'darksalmon', 'springgreen', 'royalblue'];
 
 const App= () => {
 
